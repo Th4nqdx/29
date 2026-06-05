@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="th" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waste Matching Platform</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&amp;family=Kanit:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Sarabun', sans-serif; }
+    .heading-font { font-family: 'Kanit', sans-serif; }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
+    .fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .pulse-dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .buyer-nearest { border-left: 4px solid #22c55e; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ <script src="/_sdk/telemetry_sdk.js"></script></head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto bg-[#0f1923] text-[#e8e4df]">
+   <header class="bg-[#162330] border-b border-[#2a4a3e] px-6 py-4 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-[#22c55e] rounded-lg flex items-center justify-center">
+       <i data-lucide="recycle" class="w-6 h-6 text-[#0f1923]"></i>
+      </div>
+      <h1 id="site-title" class="heading-font text-xl font-bold text-[#22c55e]">ระบบคัดแยกขยะโรงงาน</h1>
+     </div><button id="back-btn" onclick="backToHome()" class="hidden text-[#8ba89e] hover:text-white transition"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+    </div>
+   </header>
+   <div id="home-page" class="h-full w-full overflow-auto">
+    <section class="px-6 py-12 max-w-5xl mx-auto">
+     <div class="text-center mb-12"><span class="text-6xl mb-4 block">♻️</span>
+      <h2 class="heading-font text-3xl font-bold text-[#22c55e] mb-2">เริ่มจับคู่ขยะ</h2>
+      <p class="text-[#8ba89e]">เลือกวิธีการค้นหาผู้รับซื้อที่ใกล้สุด</p>
+     </div>
+     <div class="grid md:grid-cols-2 gap-8">
+      <div class="bg-[#162330] rounded-2xl border border-[#2a4a3e] p-8 hover:border-[#60a5fa] transition">
+       <div class="text-center mb-6">
+        <i data-lucide="camera" class="w-12 h-12 text-[#60a5fa] mx-auto mb-3"></i>
+        <h3 class="heading-font text-2xl font-bold text-[#60a5fa] mb-2">วิธีที่ 1</h3>
+        <p class="text-[#8ba89e]">วิเคราะห์รูปภาพอัตโนมัติ</p>
+       </div>
+       <div class="bg-[#0f1923] rounded-xl border-2 border-dashed border-[#2a4a3e] p-8 mb-6 text-center">
+        <i data-lucide="upload-cloud" class="w-14 h-14 text-[#60a5fa] mx-auto mb-3"></i>
+        <p id="upload-label" class="heading-font text-base font-semibold text-[#e8e4df] mb-4">อัพโหลดรูปสินค้า</p><input type="file" id="image-input" accept="image/*" class="hidden" onchange="previewImage(event)"> <button onclick="document.getElementById('image-input').click()" class="bg-[#60a5fa] hover:bg-[#3b82f6] text-white font-semibold py-2.5 px-8 rounded-lg transition">เลือกรูป</button>
+        <div id="preview-container" class="mt-6 hidden">
+         <img id="preview-image" src="" alt="Preview" class="max-w-full max-h-56 mx-auto rounded-lg border border-[#2a4a3e]">
+         <p class="text-xs text-[#8ba89e] mt-3">✓ รูปได้รับการเลือก</p>
+        </div>
+       </div><button id="search-btn-analyze" onclick="analyzeAndGoToMap()" disabled class="w-full bg-[#60a5fa] hover:bg-[#3b82f6] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"> <i data-lucide="zap" class="w-5 h-5"></i> วิเคราะห์และค้นหา </button>
+      </div>
+      <div class="bg-[#162330] rounded-2xl border border-[#2a4a3e] p-8 hover:border-[#22c55e] transition">
+       <div class="text-center mb-6">
+        <i data-lucide="list-filter" class="w-12 h-12 text-[#22c55e] mx-auto mb-3"></i>
+        <h3 class="heading-font text-2xl font-bold text-[#22c55e] mb-2">วิธีที่ 2</h3>
+        <p class="text-[#8ba89e]">เลือกประเภทด้วยตนเอง</p>
+       </div>
+       <p id="select-label" class="heading-font text-sm font-semibold text-[#e8e4df] mb-4">เลือกประเภทขยะ</p>
+       <div class="space-y-2.5 mb-6 max-h-64 overflow-y-auto pr-2">
+        <button onclick="selectCategory('wood', this)" class="cat-btn w-full p-3.5 rounded-lg border border-[#2a4a3e] hover:border-[#22c55e] hover:bg-[#22c55e]/10 transition text-left font-semibold text-[#e8e4df]">🪵 เศษไม้</button> <button onclick="selectCategory('metal', this)" class="cat-btn w-full p-3.5 rounded-lg border border-[#2a4a3e] hover:border-[#22c55e] hover:bg-[#22c55e]/10 transition text-left font-semibold text-[#e8e4df]">⚙️ เศษโลหะ</button> <button onclick="selectCategory('plastic', this)" class="cat-btn w-full p-3.5 rounded-lg border border-[#2a4a3e] hover:border-[#22c55e] hover:bg-[#22c55e]/10 transition text-left font-semibold text-[#e8e4df]">♻️ พลาสติก</button> <button onclick="selectCategory('fabric', this)" class="cat-btn w-full p-3.5 rounded-lg border border-[#2a4a3e] hover:border-[#22c55e] hover:bg-[#22c55e]/10 transition text-left font-semibold text-[#e8e4df]">🧵 เศษผ้า</button> <button onclick="selectCategory('chemical', this)" class="cat-btn w-full p-3.5 rounded-lg border border-[#2a4a3e] hover:border-[#22c55e] hover:bg-[#22c55e]/10 transition text-left font-semibold text-[#e8e4df]">🧪 สารเคมี</button> <button onclick="selectCategory('other', this)" class="cat-btn w-full p-3.5 rounded-lg border border-[#2a4a3e] hover:border-[#22c55e] hover:bg-[#22c55e]/10 transition text-left font-semibold text-[#e8e4df]">📋 อื่นๆ (ระบุ)</button>
+       </div>
+       <div id="other-input-container" class="mb-6 hidden">
+        <input type="text" id="other-category-input" placeholder="เช่น กระดาษ, แก้ว, ยาง, กระป๋อง" class="w-full px-4 py-2.5 bg-[#0f1923] border border-[#2a4a3e] rounded-lg text-[#e8e4df] text-sm placeholder-[#8ba89e] focus:border-[#22c55e] focus:outline-none">
+       </div><button id="search-btn-manual" onclick="goToMapManual()" disabled class="w-full bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-50 disabled:cursor-not-allowed text-[#0f1923] font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"> <i data-lucide="map-pin" class="w-5 h-5"></i> ค้นหาผู้รับซื้อใกล้สุด </button>
+      </div>
+     </div>
+    </section>
+   </div>
+   <div id="map-page" class="h-full w-full overflow-auto hidden">
+    <section class="px-6 py-8 max-w-7xl mx-auto">
+     <div class="bg-[#162330] rounded-xl p-6 border border-[#2a4a3e] mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div>
+        <p class="text-xs text-[#8ba89e] mb-1">ประเภทสินค้า</p>
+        <p id="selected-category-name" class="heading-font text-lg font-bold text-[#22c55e]">-</p>
+       </div>
+       <div>
+        <p class="text-xs text-[#8ba89e] mb-1">รูปสินค้า</p>
+        <div id="map-preview" class="w-20 h-20 rounded-lg bg-[#0f1923] border border-[#2a4a3e] flex items-center justify-center">
+         <i data-lucide="image" class="w-8 h-8 text-[#8ba89e]"></i>
+        </div>
+       </div>
+       <div class="md:text-right">
+        <p class="text-xs text-[#8ba89e] mb-2">💡 ระบบแสดงผู้รับซื้อที่ใกล้ที่สุดก่อน</p>
+        <p class="text-sm text-[#60a5fa] font-semibold">เรียงตามระยะทาง</p>
+       </div>
+      </div>
+     </div>
+     <h2 class="heading-font text-2xl font-bold text-[#60a5fa] mb-6">🏭 ผู้รับซื้อใกล้สุด</h2>
+     <div id="buyers-list" class="space-y-5 pb-8"></div>
+    </section>
+   </div>
+   <div id="modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.7)">
+    <div class="bg-[#162330] rounded-2xl max-w-lg w-full max-h-[90%] overflow-auto p-6 border border-[#2a4a3e] relative">
+     <button onclick="closeModal()" class="absolute top-4 right-4 text-[#8ba89e] hover:text-white transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+     <div id="modal-content"></div>
+    </div>
+   </div>
+  </div>
+  <script>
+const wasteData = [
+  {
+    id: 1, category: 'wood', icon: '🪵',
+    name: 'เศษไม้ยางพารา',
+    source: 'โรงงานเฟอร์นิเจอร์ ABC',
+    qty: '500 กก./สัปดาห์',
+    price: '3-5 บาท/กก.',
+    priceEst: 2000,
+    buyers: [
+      { name: 'โรงงานชีวมวล GreenPower', dist: 8, use: 'เชื้อเพลิงชีวมวลผลิตไฟฟ้า', price: '3 บาท/กก.' },
+      { name: 'ร้านไม้แปรรูป สมชาย', dist: 3, use: 'แปรรูปเป็นไม้อัด/พาเลท', price: '5 บาท/กก.' },
+      { name: 'กลุ่มชุมชนหัตถกรรม', dist: 12, use: 'งานหัตถกรรม ของตกแต่ง', price: '4 บาท/กก.' }
+    ],
+    reuses: ['ไม้อัดแผ่น', 'เชื้อเพลิงชีวมวล', 'ปุ๋ยหมัก', 'ของตกแต่งบ้าน', 'ถ่านไม้']
+  },
+  {
+    id: 2, category: 'metal', icon: '⚙️',
+    name: 'เศษเหล็กและอลูมิเนียม',
+    source: 'โรงงานชิ้นส่วนยานยนต์ XYZ',
+    qty: '300 กก./สัปดาห์',
+    price: '15-25 บาท/กก.',
+    priceEst: 6000,
+    buyers: [
+      { name: 'โรงหลอมเหล็ก สหไทย', dist: 15, use: 'หลอมใหม่ผลิตเหล็กเส้น', price: '20 บาท/กก.' },
+      { name: 'ร้านรับซื้อของเก่า วิชัย', dist: 2, use: 'คัดแยกส่งต่อโรงหลอม', price: '15 บาท/กก.' },
+      { name: 'โรงงาน Metal Recycle Co.', dist: 22, use: 'ผลิตชิ้นส่วนใหม่', price: '25 บาท/กก.' }
+    ],
+    reuses: ['เหล็กเส้นก่อสร้าง', 'ชิ้นส่วนเครื่องจักร', 'กระป๋องอลูมิเนียม', 'แผ่นเหล็กรีดใหม่']
+  },
+  {
+    id: 3, category: 'plastic', icon: '♻️',
+    name: 'เศษพลาสติก PE/PP',
+    source: 'โรงงานบรรจุภัณฑ์ PackPlus',
+    qty: '800 กก./สัปดาห์',
+    price: '8-12 บาท/กก.',
+    priceEst: 8000,
+    buyers: [
+      { name: 'โรงงานรีไซเคิล EcoPlast', dist: 5, use: 'หลอมทำเม็ดพลาสติกใหม่', price: '12 บาท/กก.' },
+      { name: 'ร้านรับซื้อ พลาสติกทอง', dist: 4, use: 'คัดแยกตามเกรดส่งต่อ', price: '8 บาท/กก.' },
+      { name: 'โรงงานผลิตถุงขยะ GreenBag', dist: 18, use: 'ผลิตถุงขยะรีไซเคิล', price: '10 บาท/กก.' }
+    ],
+    reuses: ['เม็ดพลาสติกรีไซเคิล', 'ถุงขยะ', 'กระถางต้นไม้', 'ท่อพลาสติก', 'เฟอร์นิเจอร์กลางแจ้ง']
+  },
+  {
+    id: 4, category: 'fabric', icon: '🧵',
+    name: 'เศษผ้าและเส้นใย',
+    source: 'โรงงานตัดเย็บ Fashion Plus',
+    qty: '200 กก./สัปดาห์',
+    price: '2-6 บาท/กก.',
+    priceEst: 800,
+    buyers: [
+      { name: 'โรงงานผ้าเช็ดอุตสาหกรรม', dist: 10, use: 'ผลิตผ้าเช็ดเครื่องจักร', price: '4 บาท/กก.' },
+      { name: 'กลุ่มแม่บ้านพอเพียง', dist: 6, use: 'ผลิตพรมเช็ดเท้า กระเป๋า', price: '6 บาท/กก.' },
+      { name: 'โรงงานฉนวนกันเสียง', dist: 25, use: 'ผลิตแผ่นฉนวนกันเสียง', price: '2 บาท/กก.' }
+    ],
+    reuses: ['ผ้าเช็ดอุตสาหกรรม', 'พรมเช็ดเท้า', 'ฉนวนกันเสียง', 'ไส้หมอน', 'กระเป๋าผ้ารีไซเคิล']
+  },
+  {
+    id: 5, category: 'chemical', icon: '🧪',
+    name: 'น้ำมันเครื่องใช้แล้ว',
+    source: 'โรงงานผลิตชิ้นส่วน AutoParts',
+    qty: '100 ลิตร/สัปดาห์',
+    price: '5-8 บาท/ลิตร',
+    priceEst: 600,
+    buyers: [
+      { name: 'โรงงานกลั่นน้ำมันรีไซเคิล', dist: 30, use: 'กลั่นใหม่เป็นน้ำมันหล่อลื่น', price: '8 บาท/ลิตร' },
+      { name: 'บ.จัดการของเสีย WastePro', dist: 20, use: 'กำจัดอย่างถูกวิธี/เป็นเชื้อเพลิง', price: '5 บาท/ลิตร' }
+    ],
+    reuses: ['น้ำมันหล่อลื่นรีไซเคิล', 'เชื้อเพลิงทดแทน', 'น้ำมันไฮดรอลิก']
+  },
+  {
+    id: 6, category: 'wood', icon: '🪵',
+    name: 'ขี้เลื่อยและเศษไม้ละเอียด',
+    source: 'โรงเลื่อย ป.วิชัยการช่าง',
+    qty: '1,000 กก./สัปดาห์',
+    price: '1-3 บาท/กก.',
+    priceEst: 2000,
+    buyers: [
+      { name: 'ฟาร์มเห็ด ธรรมชาติ', dist: 5, use: 'วัสดุเพาะเห็ด', price: '2 บาท/กก.' },
+      { name: 'โรงงานผลิตธูป หอมไทย', dist: 14, use: 'วัตถุดิบทำธูป', price: '3 บาท/กก.' },
+      { name: 'ฟาร์มสัตว์เลี้ยง PetFarm', dist: 7, use: 'วัสดุรองพื้นคอกสัตว์', price: '1 บาท/กก.' }
+    ],
+    reuses: ['วัสดุเพาะเห็ด', 'ธูปหอม', 'วัสดุรองพื้นสัตว์', 'ปุ๋ยหมัก', 'แผ่นไม้อัด MDF']
+  }
+];
+
+const categoryNames = { wood: '🪵 เศษไม้', metal: '⚙️ เศษโลหะ', plastic: '♻️ พลาสติก', fabric: '🧵 เศษผ้า', chemical: '🧪 สารเคมี' };
+
+let selectedCategory = null;
+let selectedImageData = null;
+let selectedCategoryName = null;
+
+function previewImage(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      selectedImageData = e.target.result;
+      document.getElementById('preview-image').src = selectedImageData;
+      document.getElementById('preview-container').classList.remove('hidden');
+      document.getElementById('search-btn-analyze').disabled = false;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function selectCategory(cat, btn) {
+  selectedCategory = cat;
+  selectedCategoryName = null;
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.classList.remove('border-[#22c55e]', 'bg-[#22c55e]/10');
+    b.classList.add('border-[#2a4a3e]');
+  });
+  btn.classList.add('border-[#22c55e]', 'bg-[#22c55e]/10');
+  
+  if (cat === 'other') {
+    document.getElementById('other-input-container').classList.remove('hidden');
+  } else {
+    document.getElementById('other-input-container').classList.add('hidden');
+  }
+  document.getElementById('search-btn-manual').disabled = false;
+}
+
+function analyzeAndGoToMap() {
+  if (!selectedImageData) return;
+  const categories = ['wood', 'metal', 'plastic', 'fabric', 'chemical'];
+  selectedCategory = categories[Math.floor(Math.random() * categories.length)];
+  selectedCategoryName = categoryNames[selectedCategory];
+  displayMapPage();
+}
+
+function goToMapManual() {
+  if (!selectedCategory) return;
+  if (selectedCategory === 'other') {
+    const otherText = document.getElementById('other-category-input').value.trim();
+    if (!otherText) return;
+    selectedCategoryName = '📋 ' + otherText;
+  } else {
+    selectedCategoryName = categoryNames[selectedCategory];
+  }
+  displayMapPage();
+}
+
+function displayMapPage() {
+  document.getElementById('selected-category-name').textContent = selectedCategoryName || 'ประเภท';
+  const mapPreview = document.getElementById('map-preview');
+  if (selectedImageData) {
+    mapPreview.innerHTML = `<img src="${selectedImageData}" alt="Preview" class="w-full h-full object-cover rounded-lg">`;
+  } else {
+    mapPreview.innerHTML = '<i data-lucide="image" class="w-8 h-8 text-[#8ba89e]"></i>';
+  }
+  
+  const matching = selectedCategory === 'other' ? wasteData : wasteData.filter(w => w.category === selectedCategory);
+  const allBuyers = [];
+  matching.forEach(item => {
+    item.buyers.forEach(buyer => {
+      allBuyers.push({ ...buyer, itemId: item.id, itemName: item.name, itemIcon: item.icon });
+    });
+  });
+  allBuyers.sort((a, b) => a.dist - b.dist);
+  
+  const buyersList = document.getElementById('buyers-list');
+  buyersList.innerHTML = allBuyers.map((buyer, idx) => {
+    const isNearest = idx === 0;
+    return `
+    <div class="bg-[#162330] rounded-xl p-6 border transition card-hover ${isNearest ? 'border-[#22c55e] bg-[#22c55e]/5 buyer-nearest' : 'border-[#2a4a3e]'}" style="animation-delay:${idx*0.08}s">
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            ${isNearest ? '<i data-lucide="star" class="w-5 h-5 text-[#f59e0b] fill-current"></i>' : ''}
+            <h3 class="heading-font font-bold text-lg text-[#e8e4df]">${buyer.name}</h3>
+          </div>
+          ${isNearest ? '<p class="text-sm font-semibold text-[#22c55e] ml-7">✓ ใกล้ที่สุด</p>' : ''}
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-[#2a4a3e]">
+        <div>
+          <p class="text-xs text-[#8ba89e] mb-2 font-semibold uppercase">ระยะทาง</p>
+          <p class="text-2xl font-bold text-[#60a5fa]">${buyer.dist} <span class="text-sm text-[#8ba89e]">กม.</span></p>
+        </div>
+        <div>
+          <p class="text-xs text-[#8ba89e] mb-2 font-semibold uppercase">ราคา</p>
+          <p class="text-2xl font-bold text-[#f59e0b]">${buyer.price}</p>
+        </div>
+      </div>
+      
+      <div class="mb-4">
+        <p class="text-xs text-[#8ba89e] mb-2"><strong>สินค้า:</strong> ${buyer.itemIcon} ${buyer.itemName}</p>
+        <p class="text-xs text-[#8ba89e] mb-1"><strong>นำไปใช้:</strong></p>
+        <p class="text-sm text-[#60a5fa] font-semibold">${buyer.use}</p>
+      </div>
+      
+      <button onclick="openBuyerModal(${buyer.itemId}, '${buyer.name.replace(/'/g, "\\'")}', ${idx})" class="w-full bg-[#22c55e] hover:bg-[#16a34a] text-[#0f1923] font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-2 text-sm">
+        <i data-lucide="info" class="w-4 h-4"></i> ดูรายละเอียดเพิ่มเติม
+      </button>
+    </div>
+    `;
+  }).join('');
+  
+  document.getElementById('home-page').classList.add('hidden');
+  document.getElementById('map-page').classList.remove('hidden');
+  document.getElementById('back-btn').classList.remove('hidden');
+  lucide.createIcons();
+}
+
+function backToHome() {
+  document.getElementById('home-page').classList.remove('hidden');
+  document.getElementById('map-page').classList.add('hidden');
+  document.getElementById('back-btn').classList.add('hidden');
+  selectedCategory = null;
+  selectedImageData = null;
+  selectedCategoryName = null;
+  document.getElementById('image-input').value = '';
+  document.getElementById('preview-container').classList.add('hidden');
+  document.getElementById('search-btn-analyze').disabled = true;
+  document.getElementById('search-btn-manual').disabled = true;
+  document.getElementById('other-input-container').classList.add('hidden');
+  document.getElementById('other-category-input').value = '';
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.classList.remove('border-[#22c55e]', 'bg-[#22c55e]/10');
+    b.classList.add('border-[#2a4a3e]');
+  });
+}
+
+function openBuyerModal(itemId, buyerName, idx) {
+  const item = wasteData.find(w => w.id === itemId);
+  const content = document.getElementById('modal-content');
+  const position = idx === 0 ? '🥇 ที่ 1 - ใกล้ที่สุด' : `ที่ ${idx + 1}`;
+  
+  content.innerHTML = `
+    <div class="text-center mb-5">
+      <span class="text-5xl">${item.icon}</span>
+      <h2 class="heading-font text-2xl font-bold mt-3 text-[#22c55e]">${item.name}</h2>
+      <p class="text-[#8ba89e] text-sm mt-2">รับซื้อโดย: ${buyerName}</p>
+      <p class="text-xs text-[#f59e0b] font-semibold mt-1">${position}</p>
+    </div>
+    
+    <div class="bg-[#0f1923] rounded-lg p-4 mb-5">
+      <p class="text-xs text-[#8ba89e] mb-3 font-semibold uppercase">ข้อมูลสินค้า</p>
+      <div class="space-y-2.5">
+        <div class="flex justify-between items-center pb-2 border-b border-[#2a4a3e]">
+          <span class="text-[#8ba89e]">ปริมาณ:</span>
+          <span class="font-semibold text-[#e8e4df]">${item.qty}</span>
+        </div>
+        <div class="flex justify-between items-center pb-2 border-b border-[#2a4a3e]">
+          <span class="text-[#8ba89e]">ราคาเฉพาะ:</span>
+          <span class="font-bold text-[#f59e0b]">${item.price}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-[#8ba89e]">รายได้ต่อสัปดาห์:</span>
+          <span class="font-semibold text-[#22c55e] text-lg">฿${item.priceEst.toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-5">
+      <h3 class="heading-font font-bold text-base mb-3 text-[#60a5fa]">💡 นำไปแปรรูปได้</h3>
+      <div class="flex flex-wrap gap-2">${item.reuses.map(r => `<span class="bg-[#f59e0b]/20 text-[#f59e0b] px-3 py-1.5 rounded-full text-xs font-medium">${r}</span>`).join('')}</div>
+    </div>
+    
+    <div class="bg-[#0f1923] rounded-lg p-4">
+      <p class="text-xs text-[#8ba89e] mb-2 font-semibold uppercase">ที่มา:</p>
+      <p class="text-sm text-[#e8e4df]">${item.source}</p>
+    </div>
+  `;
+  
+  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('modal').classList.add('flex');
+  lucide.createIcons();
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('modal').classList.remove('flex');
+}
+
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+const defaultConfig = {
+  site_title: 'ระบบคัดแยกขยะโรงงาน',
+  upload_label: 'อัพโหลดรูปสินค้า',
+  select_label: 'เลือกประเภทขยะ',
+  background_color: '#0f1923',
+  surface_color: '#162330',
+  text_color: '#e8e4df',
+  primary_color: '#22c55e',
+  secondary_color: '#60a5fa',
+  font_family: 'Kanit',
+  font_size: 16
+};
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => {
+    const app = document.getElementById('app');
+    app.style.backgroundColor = config.background_color || defaultConfig.background_color;
+    app.style.color = config.text_color || defaultConfig.text_color;
+    app.style.fontSize = (config.font_size || defaultConfig.font_size) + 'px';
+    document.querySelector('header').style.backgroundColor = config.surface_color || defaultConfig.surface_color;
+    document.getElementById('site-title').textContent = config.site_title || defaultConfig.site_title;
+    document.getElementById('site-title').style.color = config.primary_color || defaultConfig.primary_color;
+    document.getElementById('site-title').style.fontFamily = `${config.font_family || defaultConfig.font_family}, Kanit, sans-serif`;
+    document.getElementById('upload-label').textContent = config.upload_label || defaultConfig.upload_label;
+    document.getElementById('select-label').textContent = config.select_label || defaultConfig.select_label;
+    document.querySelectorAll('.heading-font').forEach(el => {
+      el.style.fontFamily = `${config.font_family || defaultConfig.font_family}, Kanit, sans-serif`;
+    });
+  },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+      { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+      { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+      { get: () => config.primary_color || defaultConfig.primary_color, set: (v) => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
+      { get: () => config.secondary_color || defaultConfig.secondary_color, set: (v) => { config.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); } }
+    ],
+    borderables: [],
+    fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+    fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ['site_title', config.site_title || defaultConfig.site_title],
+    ['upload_label', config.upload_label || defaultConfig.upload_label],
+    ['select_label', config.select_label || defaultConfig.select_label]
+  ])
+});
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a07099790ae187d5',t:'MTc4MDY3NzQyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
